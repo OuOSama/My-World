@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: AlejandroSuero/selene-linter-action@v1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --display-style=quiet .
+          version: 0.27.1
+
+  style:
+    name: Styling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{  secrets.GITHUB_TOKEN  }}
+          version: latest
+          args: --check .
+
+  Discord-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord Notify
+        uses: actions/checkout@v4
+
+      - name: Give execute permissions to the script
+        run: chmod +x ./scripts/notify-discord.sh
+
+      - name: Send notify
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          ./scripts/notify-discord.sh "${{ github.ref_name }}" "$DISCORD_WEBHOOK_URL"
